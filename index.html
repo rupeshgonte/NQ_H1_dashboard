@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NQ H1 Pattern Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #ebebea;
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --green: #1D9E75; --green-bg: #E1F5EE; --green-text: #0F6E56;
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #854F0B;
+    --red: #A32D2D; --red-bg: #FCEBEB; --red-text: #791F1F;
+    --gray-bg: #F1EFE8; --gray-text: #444441;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #e8e6de; --text2: #9c9a92; --text3: #6e6c65;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+      --green-bg: #04342C; --green-text: #9FE1CB;
+      --blue-bg: #042C53; --blue-text: #B5D4F4;
+      --amber-bg: #412402; --amber-text: #FAC775;
+      --red-bg: #501313; --red-text: #F7C1C1;
+      --gray-bg: #2C2C2A; --gray-text: #D3D1C7;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  
+  /* Layout */
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 12px 40px; display: flex; flex-direction: column; gap: 12px; }
+  @media (min-width: 900px) { .app { max-width: 900px; } .desktop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } }
+  
+  /* Cards */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .card-inner { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .header-title { font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  
+  /* Labels & values */
+  .label { font-size: 11px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .val-xl { font-size: 36px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .val-lg { font-size: 22px; font-weight: 600; }
+  .val-md { font-size: 16px; font-weight: 600; }
+  .val-sm { font-size: 13px; font-weight: 500; }
+  
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-red { background: var(--red-bg); color: var(--red-text); }
+  .badge-gray { background: var(--gray-bg); color: var(--gray-text); border: 0.5px solid var(--border); }
+  
+  /* Alerts */
+  .alert { border-radius: var(--radius-sm); padding: 10px 14px; border-left: 3px solid; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+  .alert:last-child { margin-bottom: 0; }
+  .alert-fire { background: var(--green-bg); border-color: var(--green); }
+  .alert-info { background: var(--blue-bg); border-color: var(--blue); }
+  .alert-warn { background: var(--amber-bg); border-color: var(--amber); }
+  .alert-avoid { background: var(--red-bg); border-color: var(--red); }
+  .alert-neutral { background: var(--bg2); border-color: var(--border2); }
+  .alert-title { font-weight: 600; margin-bottom: 2px; }
+  
+  /* Progress */
+  .pbar { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .pbar-fill { height: 100%; border-radius: 3px; transition: width 0.8s, background 0.5s; }
+  
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; background: var(--bg2); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 14px; }
+  .tab { flex: 1; padding: 7px 4px; font-size: 12px; font-weight: 500; border: none; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .tab.active { background: var(--bg); color: var(--text); box-shadow: var(--shadow); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  
+  /* Hour rows */
+  .hour-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 4px; border-bottom: 0.5px solid var(--border); transition: background 0.15s; border-radius: 4px; }
+  .hour-row:last-child { border-bottom: none; }
+  .hour-row.active-row { background: var(--blue-bg); border-radius: var(--radius-sm); border-bottom: none; padding: 7px 8px; }
+  .win-bar-wrap { width: 60px; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; display: inline-block; }
+  .win-bar { height: 100%; border-radius: 2px; }
+  
+  /* Grid stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  
+  /* Time stops */
+  .tstop-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+  .tstop-pill { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 4px; text-align: center; }
+  .tstop-pill.danger { border-color: var(--red); background: var(--red-bg); }
+  .tstop-pill.warn { border-color: var(--amber); background: var(--amber-bg); }
+  
+  /* Stop calc */
+  .calc-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .calc-row input, .calc-row select { padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg2); color: var(--text); font-size: 14px; }
+  .calc-row input { width: 130px; }
+  .stop-result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .stop-result-row:last-child { border-bottom: none; }
+  
+  /* Section title */
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .divider { height: 0.5px; background: var(--border); margin: 12px 0; }
+  
+  /* Clock */
+  .clock-display { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; }
+  
+  /* DOW */
+  .dow-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
+  .dow-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 8px 4px; text-align: center; border: 0.5px solid transparent; }
+  .dow-card.today { border-color: var(--blue); background: var(--blue-bg); }
+
+  /* Notification badge */
+  .notif-count { background: var(--red); color: #fff; border-radius: 20px; font-size: 11px; font-weight: 700; padding: 1px 6px; min-width: 20px; text-align: center; }
+
+  /* Bottom nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 0.5px solid var(--border); display: flex; z-index: 200; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-btn { flex: 1; padding: 10px 4px 6px; border: none; background: transparent; color: var(--text3); font-size: 10px; font-weight: 500; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: color 0.15s; }
+  .nav-btn.active { color: var(--blue); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+  .page { display: none; }
+  .page.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <span class="live-dot"></span>
+    NQ H1 Dashboard
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="header-wr" style="font-size:13px;font-weight:600;"></span>
+    <span id="alert-badge" class="notif-count" style="display:none;"></span>
+  </div>
+</div>
+
+<!-- Pages -->
+<div class="app">
+
+  <!-- PAGE: Live -->
+  <div class="page active" id="page-live">
+
+    <!-- Clock + Status -->
+    <div class="desktop-grid">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <span class="live-dot"></span>
+          <span class="label" style="margin:0;">New York Time</span>
+        </div>
+        <div class="clock-display" id="clock">--:--:--</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+          <div><div class="label">Trigger hour</div><div class="val-md" id="trigger-hour">--:00</div></div>
+          <div><div class="label">Trade window</div><div class="val-md" id="trade-window">--:00–--:59</div></div>
+        </div>
+        <div style="margin-top:10px;">
+          <div class="label">Next trigger close</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <div class="pbar" style="flex:1;"><div class="pbar-fill" id="hour-progress" style="background:var(--green);width:0%;"></div></div>
+            <span class="val-sm" id="mins-left">60m</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="current-card">
+        <div class="label">Current trade window</div>
+        <div style="margin:6px 0;" id="current-badge"></div>
+        <div class="val-lg" id="current-wr">--%</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:6px;line-height:1.6;" id="current-detail"></div>
+        <div class="divider"></div>
+        <div class="label">Minutes elapsed this hour</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <div class="val-md" id="elapsed-disp">0:00</div>
+          <div id="time-action-badge"></div>
+        </div>
+        <div class="pbar" style="margin-top:6px;"><div class="pbar-fill" id="min-progress" style="width:0%;"></div></div>
+        <div style="margin-top:10px;">
+          <div class="label">DOL probability remaining</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <div class="pbar" style="flex:1;height:8px;"><div class="pbar-fill" id="dol-prob-bar" style="width:0%;"></div></div>
+            <span class="val-sm" id="dol-prob-val" style="min-width:40px;text-align:right;">--%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="section-title" style="margin:0;">Live Alerts</div>
+        <span id="alert-count-label" style="font-size:12px;color:var(--text3);"></span>
+      </div>
+      <div id="alerts-container"></div>
+    </div>
+
+    <!-- Time stop pills -->
+    <div class="card">
+      <div class="section-title">Time-based exit rules</div>
+      <div class="tstop-grid" id="tstop-pills">
+        <div class="tstop-pill"><div style="font-size:14px;font-weight:600;">:10</div><div style="font-size:11px;color:var(--text3);">45% left</div><div style="font-size:11px;color:var(--amber-text);">Consider scratch</div></div>
+        <div class="tstop-pill"><div style="font-size:14px;font-weight:600;">:15</div><div style="font-size:11px;color:var(--text3);">39% left</div><div style="font-size:11px;color:var(--red-text);">Strong exit</div></div>
+        <div class="tstop-pill"><div style="font-size:14px;font-weight:600;">:30</div><div style="font-size:11px;color:var(--text3);">23% left</div><div style="font-size:11px;color:var(--red-text);">Should be out</div></div>
+        <div class="tstop-pill"><div style="font-size:14px;font-weight:600;">:45</div><div style="font-size:11px;color:var(--text3);">10% left</div><div style="font-size:11px;color:var(--red-text);">Dead trade</div></div>
+      </div>
+    </div>
+
+    <!-- DOW -->
+    <div class="card">
+      <div class="section-title">Day of week</div>
+      <div class="dow-grid" id="dow-grid"></div>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="card">
+      <div class="section-title">5-year summary</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Trades</div><div class="val-md">26,706</div></div>
+        <div class="stat-card"><div class="label">Cont. WR</div><div class="val-md" style="color:var(--green);">73.0%</div></div>
+        <div class="stat-card"><div class="label">Rev. WR</div><div class="val-md" style="color:var(--amber);">61.8%</div></div>
+        <div class="stat-card"><div class="label">Avg DOL</div><div class="val-md">:09</div></div>
+        <div class="stat-card"><div class="label">Med. Adverse</div><div class="val-md">4.2 pts</div></div>
+        <div class="stat-card"><div class="label">Yrs data</div><div class="val-md">5</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: Hours -->
+  <div class="page" id="page-hours">
+    <div class="card">
+      <div class="section-title">Trigger hours — continuation only</div>
+      <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:8px;">
+        <span style="color:var(--green);">★ A+ (≥78%)</span>
+        <span style="color:var(--amber);">△ Weak</span>
+        <span style="color:var(--red);">✕ Avoid</span>
+      </div>
+      <div id="hours-list"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: Stops -->
+  <div class="page" id="page-stops">
+    <div class="card">
+      <div class="section-title">Stop loss guidance</div>
+      <div class="tstop-grid" style="grid-template-columns:repeat(2,1fr);">
+        <div class="tstop-pill"><div style="font-size:16px;font-weight:700;">10 pt</div><div style="font-size:12px;color:var(--text2);">catches 74% of winners</div></div>
+        <div class="tstop-pill"><div style="font-size:16px;font-weight:700;">15 pt</div><div style="font-size:12px;color:var(--text2);">catches 84% of winners</div></div>
+        <div class="tstop-pill"><div style="font-size:16px;font-weight:700;">22 pt</div><div style="font-size:12px;color:var(--text2);">catches 90% of winners</div></div>
+        <div class="tstop-pill"><div style="font-size:16px;font-weight:700;">33 pt</div><div style="font-size:12px;color:var(--text2);">catches 95% of winners</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">Stop loss calculator</div>
+      <div class="calc-row">
+        <input type="number" id="entry-price" placeholder="Entry price" oninput="calcStops()">
+        <select id="direction" onchange="calcStops()">
+          <option value="long">Long</option>
+          <option value="short">Short</option>
+        </select>
+      </div>
+      <div id="stop-results" style="margin-top:12px;"></div>
+
+      <div class="divider"></div>
+      <div class="section-title">Adverse excursion (before DOL hit)</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Median</div><div class="val-md">4.2 pt</div></div>
+        <div class="stat-card"><div class="label">Mean</div><div class="val-md">8.9 pt</div></div>
+        <div class="stat-card"><div class="label">75th %ile</div><div class="val-md">10.2 pt</div></div>
+        <div class="stat-card"><div class="label">90th %ile</div><div class="val-md">21.8 pt</div></div>
+        <div class="stat-card"><div class="label">95th %ile</div><div class="val-md">32.5 pt</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="section-title">Retracement distribution (winners)</div>
+      <div id="retrace-bars"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: DOL -->
+  <div class="page" id="page-dol">
+    <div class="card">
+      <div class="section-title">DOL timing — cumulative %</div>
+      <div id="dol-cumul"></div>
+
+      <div class="divider"></div>
+      <div class="section-title">Time-based success rate</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:10px;">If X minutes pass without DOL hit, probability it eventually fills:</p>
+      <div id="time-cutoff-list"></div>
+
+      <div class="divider"></div>
+      <div class="section-title">TDO filter</div>
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="stat-card"><div class="label">Longs above TDO</div><div class="val-md" style="color:var(--green);">74.1%</div></div>
+        <div class="stat-card"><div class="label">Longs below TDO</div><div class="val-md">72.2%</div></div>
+        <div class="stat-card"><div class="label">Shorts above TDO</div><div class="val-md">71.4%</div></div>
+        <div class="stat-card"><div class="label">Shorts below TDO</div><div class="val-md">72.2%</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px;">Longs above TDO get +2% edge. Shorts work similarly regardless of TDO position.</p>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-live" onclick="showPage('live')">
+    <span class="nav-icon">📡</span>Live
+  </button>
+  <button class="nav-btn" id="nav-hours" onclick="showPage('hours')">
+    <span class="nav-icon">🕐</span>Hours
+  </button>
+  <button class="nav-btn" id="nav-stops" onclick="showPage('stops')">
+    <span class="nav-icon">🛡</span>Stops
+  </button>
+  <button class="nav-btn" id="nav-dol" onclick="showPage('dol')">
+    <span class="nav-icon">⏱</span>DOL
+  </button>
+</div>
+
+<script>
+const HOURS = [
+  {t:0,  tw:"01:00", wr:78.7, avg:9,  bull:80, bear:77, top:true},
+  {t:1,  tw:"02:00", wr:79.4, avg:7,  bull:80, bear:78, top:true},
+  {t:2,  tw:"03:00", wr:77.8, avg:6,  bull:77, bear:79, top:true},
+  {t:3,  tw:"04:00", wr:65.1, avg:8,  bull:66, bear:64, avoid:true},
+  {t:4,  tw:"05:00", wr:66.7, avg:11, bull:68, bear:66, avoid:true},
+  {t:5,  tw:"06:00", wr:72.4, avg:10, bull:72, bear:73},
+  {t:6,  tw:"07:00", wr:74.2, avg:8,  bull:77, bear:71},
+  {t:7,  tw:"08:00", wr:79.0, avg:10, bull:79, bear:79, top:true},
+  {t:8,  tw:"09:00", wr:85.0, avg:14, bull:85, bear:85, top:true, best:true},
+  {t:9,  tw:"10:00", wr:78.6, avg:6,  bull:80, bear:77, top:true},
+  {t:10, tw:"11:00", wr:71.1, avg:9,  bull:73, bear:69},
+  {t:11, tw:"12:00", wr:71.8, avg:10, bull:69, bear:76},
+  {t:12, tw:"13:00", wr:75.7, avg:9,  bull:78, bear:72},
+  {t:13, tw:"14:00", wr:75.0, avg:9,  bull:76, bear:73},
+  {t:14, tw:"15:00", wr:77.9, avg:10, bull:78, bear:77},
+  {t:15, tw:"16:00", wr:55.1, avg:5,  bull:55, bear:55, avoid:true, worst:true},
+  {t:18, tw:"19:00", wr:68.1, avg:13, bull:68, bear:69, avoid:true},
+  {t:19, tw:"20:00", wr:74.1, avg:7,  bull:75, bear:73},
+  {t:20, tw:"21:00", wr:69.4, avg:12, bull:71, bear:67},
+  {t:21, tw:"22:00", wr:68.4, avg:11, bull:69, bear:67},
+  {t:22, tw:"23:00", wr:67.4, avg:11, bull:70, bear:65, avoid:true},
+  {t:23, tw:"00:00", wr:71.1, avg:11, bull:72, bear:70},
+];
+const DOW = [{d:"Mon",wr:71.9,idx:1},{d:"Tue",wr:73.0,idx:2},{d:"Wed",wr:72.9,idx:3},{d:"Thu",wr:74.5,idx:4},{d:"Fri",wr:72.6,idx:5}];
+const RETRACE = [{b:"0–5 pt",p:53.5},{b:"5–10 pt",p:20.5},{b:"10–15 pt",p:9.5},{b:"15–20 pt",p:5.2},{b:"20–30 pt",p:5.5},{b:"30–50 pt",p:3.8},{b:"50+ pt",p:2.0}];
+const DOL_CUMUL = [{m:":00",p:26.7},{m:":02",p:42.2},{m:":05",p:54.1},{m:":10",p:66.4},{m:":15",p:73.9},{m:":30",p:87.9},{m:":45",p:95.6}];
+const TIME_STOP = [{min:5,p:53.1},{min:10,p:45.3},{min:15,p:39.2},{min:20,p:33.9},{min:30,p:23.1},{min:45,p:9.8}];
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function getNY(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'})); }
+function getHourData(h){ return HOURS.find(d=>d.t===h)||null; }
+function getDOLProb(m){ for(let i=TIME_STOP.length-1;i>=0;i--){ if(m>=TIME_STOP[i].min) return TIME_STOP[i].p; } return 71.2; }
+
+function wrColor(wr){
+  if(wr>=78) return 'var(--green)';
+  if(wr>=72) return 'var(--blue)';
+  if(wr>=68) return 'var(--text3)';
+  if(wr>=65) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function wrBadge(wr){
+  if(wr>=78) return `<span class="badge badge-green">A+ ${wr}%</span>`;
+  if(wr>=72) return `<span class="badge badge-blue">Good ${wr}%</span>`;
+  if(wr>=68) return `<span class="badge badge-gray">${wr}%</span>`;
+  if(wr>=65) return `<span class="badge badge-amber">Weak ${wr}%</span>`;
+  return `<span class="badge badge-red">Avoid ${wr}%</span>`;
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+}
+
+// Render static content
+function renderHours(activeT){
+  const c = document.getElementById('hours-list');
+  c.innerHTML = HOURS.map(d=>{
+    const isActive = d.t===activeT;
+    const barW = Math.round((d.wr-50)/50*100);
+    const icon = d.best ? '★' : d.top ? '★' : d.avoid ? '✕' : '';
+    const iconColor = d.top ? 'var(--green)' : d.avoid ? 'var(--red)' : 'transparent';
+    return `<div class="hour-row${isActive?' active-row':''}">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:${iconColor};min-width:12px;">${icon}</span>
+        <span style="font-size:14px;font-weight:600;min-width:40px;">${pad(d.t)}:00</span>
+        <span style="font-size:12px;color:var(--text3);">→ ${d.tw}</span>
+        ${isActive ? '<span class="badge badge-blue" style="font-size:10px;">NOW</span>' : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:${wrColor(d.wr)};min-width:38px;text-align:right;">${d.wr}%</span>
+        <div class="win-bar-wrap"><div class="win-bar" style="width:${barW}%;background:${wrColor(d.wr)};"></div></div>
+        <span style="font-size:11px;color:var(--text3);min-width:24px;">:${pad(d.avg)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRetrace(){
+  document.getElementById('retrace-bars').innerHTML = RETRACE.map(r=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <span style="font-size:12px;color:var(--text2);min-width:60px;">${r.b}</span>
+      <div class="pbar" style="flex:1;"><div class="pbar-fill" style="width:${r.p*1.8}%;background:var(--blue);"></div></div>
+      <span style="font-size:12px;font-weight:600;min-width:36px;text-align:right;">${r.p}%</span>
+    </div>`).join('');
+}
+
+function renderDOL(){
+  document.getElementById('dol-cumul').innerHTML = DOL_CUMUL.map(r=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <span style="font-size:13px;font-weight:700;min-width:30px;">${r.m}</span>
+      <div class="pbar" style="flex:1;height:8px;"><div class="pbar-fill" style="width:${r.p}%;background:var(--green);"></div></div>
+      <span style="font-size:12px;color:var(--text2);min-width:38px;text-align:right;">${r.p}%</span>
+    </div>`).join('');
+
+  document.getElementById('time-cutoff-list').innerHTML = TIME_STOP.map(r=>{
+    const col = r.p>=40 ? 'var(--green)' : r.p>=25 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="stop-result-row">
+      <span style="font-size:13px;">After <strong>:${pad(r.min)}</strong> mins</span>
+      <span style="font-size:13px;font-weight:700;color:${col};">${r.p}% probability</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDOW(){
+  const ny = getNY();
+  const todayDay = ny.getDay();
+  document.getElementById('dow-grid').innerHTML = DOW.map(d=>{
+    const isToday = d.idx===todayDay;
+    return `<div class="dow-card${isToday?' today':''}">
+      <div class="label" style="text-align:center;">${d.d}</div>
+      <div style="font-size:14px;font-weight:700;text-align:center;color:${wrColor(d.wr)};margin-top:2px;">${d.wr}%</div>
+    </div>`;
+  }).join('');
+}
+
+function calcStops(){
+  const entry = parseFloat(document.getElementById('entry-price').value);
+  const dir = document.getElementById('direction').value;
+  const c = document.getElementById('stop-results');
+  if(isNaN(entry)||entry<=0){c.innerHTML='';return;}
+  const stops = [{pts:10,pct:74},{pts:15,pct:84},{pts:22,pct:90},{pts:33,pct:95}];
+  c.innerHTML = stops.map(s=>{
+    const lvl = dir==='long' ? (entry-s.pts).toFixed(2) : (entry+s.pts).toFixed(2);
+    return `<div class="stop-result-row">
+      <span><strong>${s.pts} pt</strong> → <span style="font-size:15px;font-weight:700;">${lvl}</span></span>
+      <span style="color:var(--text3);font-size:12px;">${s.pct}% of winners</span>
+    </div>`;
+  }).join('');
+}
+
+let lastAlertCount = 0;
+
+function buildAlerts(h, m, tradingNow){
+  const alerts = [];
+  const nextH = (h+1)%24;
+  const nextData = getHourData(h); // current hour as trigger, next hour as trade
+
+  if(tradingNow){
+    if(tradingNow.wr>=78){
+      alerts.push({type:'fire', title:'A+ Setup Active', msg:`${pad(h)}:00 trade window — ${tradingNow.wr}% win rate. Bull ${tradingNow.bull}% / Bear ${tradingNow.bear}%. Avg DOL :${pad(tradingNow.avg)}.`});
+    } else if(tradingNow.wr>=72){
+      alerts.push({type:'info', title:'Good Setup Active', msg:`${pad(h)}:00 trade window — ${tradingNow.wr}% win rate. Avg DOL :${pad(tradingNow.avg)}.`});
+    } else if(tradingNow.wr<65){
+      alerts.push({type:'avoid', title:'Avoid This Hour', msg:`${pad(h)}:00 only ${tradingNow.wr}% win rate. Below threshold — consider no trade.`});
+    }
+  }
+
+  if(m>=45){ alerts.push({type:'avoid', title:'Dead Trade Zone', msg:`${m} min elapsed — only 10% DOL probability. Exit immediately.`}); }
+  else if(m>=30){ alerts.push({type:'avoid', title:'Exit Now', msg:`${m} min elapsed — 23% DOL probability. Should be out of the trade.`}); }
+  else if(m>=15){ alerts.push({type:'warn', title:'Strong Exit Signal', msg:`${m} min elapsed — 39% probability. Strong case to exit if not filled.`}); }
+  else if(m>=10){ alerts.push({type:'warn', title:'Consider Scratching', msg:`${m} min elapsed — 45% probability remaining. Consider scratching.`}); }
+
+  if(nextData && nextData.wr>=78){
+    const minsLeft = 60-m;
+    alerts.push({type:'fire', title:`A+ Setup in ${minsLeft} min`, msg:`Trigger ${pad(h)}:59 close → Trade opens ${nextData.tw} (${nextData.wr}% WR). Prepare now.`});
+  }
+  if(h===15){ alerts.push({type:'avoid', title:'Worst Hour — Avoid', msg:'15:00 trigger / 16:00 trade = 55.1% WR. Worse than random. No trade.'}); }
+  if(tradingNow && tradingNow.avg<=7 && m<3){
+    alerts.push({type:'info', title:'Fast DOL Hour', msg:`Avg DOL at :${pad(tradingNow.avg)}. Watch for immediate fill at open.`});
+  }
+  if(alerts.length===0){
+    alerts.push({type:'neutral', title:'Monitoring', msg:`${pad(h)}:00 hour — no critical alerts. Next trigger closes at ${pad(h)}:59.`});
+  }
+
+  document.getElementById('alerts-container').innerHTML = alerts.map(a=>`
+    <div class="alert alert-${a.type}">
+      <div class="alert-title">${a.title}</div>
+      <div>${a.msg}</div>
+    </div>`).join('');
+
+  const criticalCount = alerts.filter(a=>a.type==='fire'||a.type==='avoid').length;
+  document.getElementById('alert-badge').textContent = criticalCount;
+  document.getElementById('alert-badge').style.display = criticalCount>0 ? 'inline' : 'none';
+  document.getElementById('alert-count-label').textContent = `${alerts.length} alert${alerts.length!==1?'s':''}`;
+}
+
+function tick(){
+  const ny = getNY();
+  const h = ny.getHours(), m = ny.getMinutes(), s = ny.getSeconds();
+  const triggerH = h;
+  const tradeTriggerH = (h-1+24)%24;
+  const tradingNow = getHourData(tradeTriggerH);
+  const nextH = (h+1)%24;
+
+  // Clock
+  document.getElementById('clock').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  document.getElementById('trigger-hour').textContent = `${pad(triggerH)}:00`;
+  document.getElementById('trade-window').textContent = `${pad(h)}:00–${pad(h)}:59`;
+
+  const secElapsed = m*60+s;
+  const pct = Math.round(secElapsed/3600*100);
+  document.getElementById('hour-progress').style.width = pct+'%';
+  document.getElementById('mins-left').textContent = `${60-m}m left`;
+
+  // Current card
+  if(tradingNow){
+    document.getElementById('current-badge').innerHTML = wrBadge(tradingNow.wr);
+    document.getElementById('current-wr').textContent = tradingNow.wr+'% win rate';
+    document.getElementById('current-wr').style.color = wrColor(tradingNow.wr);
+    document.getElementById('current-detail').innerHTML = `Bull cont: ${tradingNow.bull}% &nbsp;|&nbsp; Bear cont: ${tradingNow.bear}%<br>Avg DOL minute: :${pad(tradingNow.avg)} &nbsp;|&nbsp; Trigger: ${pad(tradeTriggerH)}:00`;
+    document.getElementById('header-wr').textContent = tradingNow.wr+'%';
+    document.getElementById('header-wr').style.color = wrColor(tradingNow.wr);
+  }
+
+  document.getElementById('elapsed-disp').textContent = `${m}:${pad(s)}`;
+  const minProg = Math.round(m/60*100);
+  document.getElementById('min-progress').style.width = minProg+'%';
+  document.getElementById('min-progress').style.background = m>=30 ? 'var(--red)' : m>=10 ? 'var(--amber)' : 'var(--green)';
+
+  const prob = getDOLProb(m);
+  const probColor = prob>=40 ? 'var(--green)' : prob>=25 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('dol-prob-bar').style.width = prob+'%';
+  document.getElementById('dol-prob-bar').style.background = probColor;
+  document.getElementById('dol-prob-val').textContent = prob.toFixed(1)+'%';
+  document.getElementById('dol-prob-val').style.color = probColor;
+
+  let actionHTML = '';
+  if(m<10) actionHTML = `<span class="badge badge-green">Hold</span>`;
+  else if(m<15) actionHTML = `<span class="badge badge-amber">Consider scratch</span>`;
+  else if(m<30) actionHTML = `<span class="badge badge-red">Exit signal</span>`;
+  else actionHTML = `<span class="badge badge-red">Exit now</span>`;
+  document.getElementById('time-action-badge').innerHTML = actionHTML;
+
+  // Time stop pill highlights
+  const pills = document.querySelectorAll('.tstop-pill');
+  [10,15,30,45].forEach((threshold,i)=>{
+    pills[i].classList.remove('danger','warn');
+    if(m>=threshold){ pills[i].classList.add(threshold>=30?'danger':'warn'); }
+  });
+
+  buildAlerts(h, m, tradingNow);
+  renderHours(triggerH);
+  renderDOW();
+}
+
+// Init static
+renderRetrace();
+renderDOL();
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
